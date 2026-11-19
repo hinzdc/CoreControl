@@ -33,8 +33,8 @@ fun CpuSummarySection(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+            .padding(horizontal = 12.dp, vertical = 2.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         SummaryMetricCard(
             label = "TOTAL",
@@ -72,26 +72,27 @@ private fun SummaryMetricCard(
 ) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(8.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .border(1.dp, color.copy(alpha = 0.25f), RoundedCornerShape(12.dp))
-            .padding(vertical = 10.dp, horizontal = 8.dp),
+            .border(1.dp, color.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+            .padding(vertical = 5.dp, horizontal = 4.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = value,
-                style = MaterialTheme.typography.titleLarge.copy(
+                style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
+                    fontSize = 17.sp
                 ),
                 color = color
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 9.sp,
-                    letterSpacing = 0.5.sp
+                    fontSize = 8.5.sp,
+                    letterSpacing = 0.5.sp,
+                    fontWeight = FontWeight.SemiBold
                 ),
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

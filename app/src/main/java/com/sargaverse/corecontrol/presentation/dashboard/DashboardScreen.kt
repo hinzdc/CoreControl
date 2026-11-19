@@ -56,8 +56,8 @@ fun DashboardScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val configuration = LocalConfiguration.current
 
-    // Responsive column count: 4 columns on wide screens (>=600dp), 2 columns on phones
-    val columnCount = if (configuration.screenWidthDp >= 600) 4 else 2
+    // Target 4 columns on all standard Android phones (width >= 320dp), adapting only if screen is narrower
+    val columnCount = if (configuration.screenWidthDp >= 320) 4 else 2
 
     LaunchedEffect(uiState.userMessage) {
         val msg = uiState.userMessage
@@ -117,29 +117,30 @@ fun DashboardScreen(
                     val bannerColor = if (allActive) CoreOnlineGreen else CoreProtectedAmber
 
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(8.dp),
                         color = bannerColor.copy(alpha = 0.12f),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp)
+                            .padding(horizontal = 12.dp, vertical = 2.dp)
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
-                                        .size(9.dp)
+                                        .size(8.dp)
                                         .clip(CircleShape)
                                         .background(bannerColor)
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = if (allActive) "ALL CORES ACTIVE" else "PARTIALLY ACTIVE",
-                                    style = MaterialTheme.typography.labelMedium.copy(
+                                    style = MaterialTheme.typography.labelSmall.copy(
                                         fontWeight = FontWeight.Bold,
+                                        fontSize = 10.sp,
                                         letterSpacing = 0.5.sp
                                     ),
                                     color = bannerColor
@@ -147,7 +148,10 @@ fun DashboardScreen(
                             }
                             Text(
                                 text = "${uiState.summary.onlineCores}/${uiState.summary.totalCores} Online",
-                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 10.sp
+                                ),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                         }
@@ -165,26 +169,27 @@ fun DashboardScreen(
 
                 // CPU Core Cards Section Title
                 item {
-                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
+                    Column(modifier = Modifier.padding(start = 12.dp, top = 4.dp, end = 12.dp, bottom = 1.dp)) {
                         Text(
                             text = "INDIVIDUAL CPU CORES (${uiState.cores.size})",
                             style = MaterialTheme.typography.labelSmall.copy(
-                                letterSpacing = 1.sp,
-                                fontWeight = FontWeight.Bold
+                                letterSpacing = 0.8.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 9.sp
                             ),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
 
-                // Responsive Grid of Clickable Rectangular CPU Cards (NO toggle switches)
+                // Compact 4-column Responsive Grid of Clickable Rectangular CPU Cards (4x2 for 8 cores)
                 val chunkedCores = uiState.cores.chunked(columnCount)
                 items(chunkedCores) { rowCores ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 5.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            .padding(horizontal = 12.dp, vertical = 2.5.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         for (core in rowCores) {
                             val isToggling = uiState.activeTogglingCpuIds.contains(core.cpuId) || uiState.isBulkOperating

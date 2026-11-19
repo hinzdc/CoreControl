@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -48,7 +49,7 @@ fun CpuHeaderSection(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 4.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -58,38 +59,45 @@ fun CpuHeaderSection(
             Column {
                 Text(
                     text = "CORE CONTROL",
-                    style = MaterialTheme.typography.headlineMedium.copy(
+                    style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Black,
-                        letterSpacing = 1.sp
+                        fontSize = 20.sp,
+                        letterSpacing = 0.8.sp
                     ),
                     color = CyberPrimary
                 )
                 Text(
                     text = "SARGAVERSE SYSTEM UTILITY",
                     style = MaterialTheme.typography.labelSmall.copy(
-                        letterSpacing = 1.5.sp,
-                        fontWeight = FontWeight.Bold
+                        letterSpacing = 1.2.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 9.sp
                     ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onOpenTopology) {
+                IconButton(
+                    onClick = onOpenTopology,
+                    modifier = Modifier.size(36.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Default.Info,
                         contentDescription = "System Info",
-                        tint = MaterialTheme.colorScheme.onSurface
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
 
                 IconButton(
                     onClick = onRefresh,
-                    enabled = !isRefreshing
+                    enabled = !isRefreshing,
+                    modifier = Modifier.size(36.dp)
                 ) {
                     if (isRefreshing) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(18.dp),
                             strokeWidth = 2.dp,
                             color = CyberPrimary
                         )
@@ -97,41 +105,46 @@ fun CpuHeaderSection(
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = "Refresh",
-                            tint = MaterialTheme.colorScheme.onSurface
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
 
-                IconButton(onClick = onOpenSettings) {
+                IconButton(
+                    onClick = onOpenSettings,
+                    modifier = Modifier.size(36.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Default.Settings,
                         contentDescription = "Settings",
-                        tint = MaterialTheme.colorScheme.onSurface
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.padding(top = 8.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         // Root authorization status badge
         Surface(
             shape = RoundedCornerShape(8.dp),
             color = when (rootStatus) {
-                is RootStatus.Granted -> CoreOnlineGreen.copy(alpha = 0.15f)
-                is RootStatus.Denied -> MaterialTheme.colorScheme.error.copy(alpha = 0.15f)
-                is RootStatus.Checking -> CoreProtectedAmber.copy(alpha = 0.15f)
-                RootStatus.NotAvailable -> MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
+                is RootStatus.Granted -> CoreOnlineGreen.copy(alpha = 0.12f)
+                is RootStatus.Denied -> MaterialTheme.colorScheme.error.copy(alpha = 0.12f)
+                is RootStatus.Checking -> CoreProtectedAmber.copy(alpha = 0.12f)
+                RootStatus.NotAvailable -> MaterialTheme.colorScheme.outline.copy(alpha = 0.12f)
             },
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     modifier = Modifier
-                        .size(10.dp)
+                        .size(8.dp)
                         .clip(CircleShape)
                         .background(
                             when (rootStatus) {
@@ -152,7 +165,10 @@ fun CpuHeaderSection(
                         is RootStatus.Checking -> "Root Access: Checking authorization..."
                         RootStatus.NotAvailable -> "Root Access: SU Binary Not Found"
                     },
-                    style = MaterialTheme.typography.labelMedium,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 11.sp
+                    ),
                     color = when (rootStatus) {
                         is RootStatus.Granted -> CoreOnlineGreen
                         is RootStatus.Denied -> MaterialTheme.colorScheme.error

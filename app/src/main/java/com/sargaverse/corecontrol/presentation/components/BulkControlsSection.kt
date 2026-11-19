@@ -38,39 +38,40 @@ fun BulkControlsSection(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .padding(start = 12.dp, top = 4.dp, end = 12.dp, bottom = 2.dp)
     ) {
         Text(
             text = "BULK CONTROLS",
             style = MaterialTheme.typography.labelSmall.copy(
-                letterSpacing = 1.sp,
-                fontWeight = FontWeight.Bold
+                letterSpacing = 0.8.sp,
+                fontWeight = FontWeight.Bold,
+                fontSize = 9.sp
             ),
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(3.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // ALL ON Button
             OutlinedButton(
                 onClick = onAllOnClick,
                 enabled = !isOperating,
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(8.dp),
                 border = BorderStroke(1.dp, CoreOnlineGreen.copy(alpha = 0.5f)),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = CoreOnlineGreen
                 ),
                 modifier = Modifier
                     .weight(1f)
-                    .height(48.dp)
+                    .height(38.dp)
             ) {
                 if (isOperating) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(16.dp),
                         strokeWidth = 2.dp,
                         color = CoreOnlineGreen
                     )
@@ -78,13 +79,14 @@ fun BulkControlsSection(
                     Icon(
                         imageVector = Icons.Default.Power,
                         contentDescription = "All Online",
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(16.dp)
                     )
-                    Spacer(modifier = Modifier.size(8.dp))
+                    Spacer(modifier = Modifier.size(6.dp))
                     Text(
                         text = "ALL ON",
                         style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
                         )
                     )
                 }
@@ -94,18 +96,18 @@ fun BulkControlsSection(
             OutlinedButton(
                 onClick = onAllOffClick,
                 enabled = !isOperating,
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(8.dp),
                 border = BorderStroke(1.dp, CoreErrorRed.copy(alpha = 0.5f)),
                 colors = ButtonDefaults.outlinedButtonColors(
                     contentColor = CoreErrorRed
                 ),
                 modifier = Modifier
                     .weight(1f)
-                    .height(48.dp)
+                    .height(38.dp)
             ) {
                 if (isOperating) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(16.dp),
                         strokeWidth = 2.dp,
                         color = CoreErrorRed
                     )
@@ -113,13 +115,14 @@ fun BulkControlsSection(
                     Icon(
                         imageVector = Icons.Default.PowerOff,
                         contentDescription = "All Offline",
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(16.dp)
                     )
-                    Spacer(modifier = Modifier.size(8.dp))
+                    Spacer(modifier = Modifier.size(6.dp))
                     Text(
                         text = "ALL OFF",
                         style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
                         )
                     )
                 }

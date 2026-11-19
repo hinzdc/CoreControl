@@ -41,28 +41,29 @@ fun OperationHistorySection(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp)
     ) {
         Text(
             text = "OPERATION AUDIT LOG",
             style = MaterialTheme.typography.labelSmall.copy(
-                letterSpacing = 1.sp,
-                fontWeight = FontWeight.Bold
+                letterSpacing = 0.8.sp,
+                fontWeight = FontWeight.Bold,
+                fontSize = 9.sp
             ),
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         Surface(
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(8.dp),
             color = MaterialTheme.colorScheme.surface,
             modifier = Modifier
                 .fillMaxWidth()
                 .border(
                     width = 1.dp,
                     color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(8.dp)
                 )
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
