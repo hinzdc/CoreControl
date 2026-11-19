@@ -10,3 +10,21 @@ captures/
 .cxx
 *.apk
 *.aab
+
+# Signing & Credentials
+*.jks
+*.keystore
+*.jceks
+keystore.properties
+signing.properties
+release.properties
+*.pem
+*.pk8
+
+# Distribution artifacts directory
+/dist/
+dist/
+
+# Logs & scratch
+*.log
+.system_generated/
