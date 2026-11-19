@@ -1,16 +1,20 @@
 package com.sargaverse.corecontrol
 
-import com.sargaverse.corecontrol.data.cpu.CpuRepositoryImpl
-import com.sargaverse.corecontrol.data.cpu.SysfsCpuReader
 import com.sargaverse.corecontrol.data.history.OperationLogRepositoryImpl
 import com.sargaverse.corecontrol.data.root.RootEngine
 import com.sargaverse.corecontrol.data.root.ShellResult
 import com.sargaverse.corecontrol.domain.model.CpuCapabilityState
 import com.sargaverse.corecontrol.domain.model.CpuCore
 import com.sargaverse.corecontrol.domain.model.OperationResult
+import com.sargaverse.corecontrol.domain.model.RootStatus
 import com.sargaverse.corecontrol.domain.repository.CpuRepository
+import com.sargaverse.corecontrol.domain.repository.RootRepository
+import com.sargaverse.corecontrol.domain.repository.SettingsRepository
 import com.sargaverse.corecontrol.domain.usecase.BulkCpuControlUseCase
+import com.sargaverse.corecontrol.domain.usecase.RestoreCoresOnBootUseCase
 import com.sargaverse.corecontrol.domain.usecase.ToggleCpuCoreUseCase
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -21,7 +25,7 @@ import org.junit.Test
 
 /**
  * Unit tests verifying CPU safety policies, CPU0 protection,
- * and the Absolute Core Control Rule.
+ * Absolute Core Control Rule, and Boot Restoration behavior.
  */
 class CpuSafetyUnitTest {
 
@@ -33,6 +37,7 @@ class CpuSafetyUnitTest {
     ) {
         val onlineState = mutableMapOf<Int, Boolean>()
         val commandLog = mutableListOf<String>()
+        var simulateHardwareLockOnCpu: Int? = null
 
         init {
             // Initially all cores are online
@@ -53,6 +58,11 @@ class CpuSafetyUnitTest {
                 // Hardware simulation: CPU0 is physically protected by kernel
                 if (targetCpu == 0 && !value) {
                     return ShellResult(1, "", "Permission denied: CPU0 cannot be disabled")
+                }
+
+                if (simulateHardwareLockOnCpu == targetCpu) {
+                    // Command exits 0, but kernel hardware lock prevents change in sysfs
+                    return ShellResult(0, "", "")
                 }
 
                 onlineState[targetCpu] = value
@@ -138,19 +148,53 @@ class CpuSafetyUnitTest {
         override suspend fun getSummary() = throw NotImplementedError()
     }
 
+    class TestSettingsRepository : SettingsRepository {
+        val refreshIntervalState = MutableStateFlow(2000L)
+        val confirmBulkState = MutableStateFlow(true)
+        val confirmIndividualState = MutableStateFlow(false)
+        val restoreOnBootState = MutableStateFlow(true)
+
+        override val refreshIntervalMs: Flow<Long> = refreshIntervalState
+        override val confirmBulkActions: Flow<Boolean> = confirmBulkState
+        override val confirmIndividualAction: Flow<Boolean> = confirmIndividualState
+        override val restoreOnBoot: Flow<Boolean> = restoreOnBootState
+
+        override suspend fun setRefreshIntervalMs(interval: Long) { refreshIntervalState.value = interval }
+        override suspend fun setConfirmBulkActions(confirm: Boolean) { confirmBulkState.value = confirm }
+        override suspend fun setConfirmIndividualAction(confirm: Boolean) { confirmIndividualState.value = confirm }
+        override suspend fun setRestoreOnBoot(enabled: Boolean) { restoreOnBootState.value = enabled }
+    }
+
+    class TestRootRepository : RootRepository {
+        var status: RootStatus = RootStatus.Granted
+        override suspend fun checkRootStatus(): RootStatus = status
+        override suspend fun executeSu(command: String, timeoutMs: Long): ShellResult = ShellResult(0, "", "")
+    }
+
     private lateinit var fakeHardware: FakeHardwareSysfs
     private lateinit var repository: TestCpuRepository
+    private lateinit var settingsRepository: TestSettingsRepository
+    private lateinit var rootRepository: TestRootRepository
     private lateinit var logRepository: OperationLogRepositoryImpl
     private lateinit var toggleUseCase: ToggleCpuCoreUseCase
     private lateinit var bulkUseCase: BulkCpuControlUseCase
+    private lateinit var bootRestoreUseCase: RestoreCoresOnBootUseCase
 
     @Before
     fun setUp() {
         fakeHardware = FakeHardwareSysfs(8)
         repository = TestCpuRepository(fakeHardware)
+        settingsRepository = TestSettingsRepository()
+        rootRepository = TestRootRepository()
         logRepository = OperationLogRepositoryImpl()
         toggleUseCase = ToggleCpuCoreUseCase(repository, logRepository)
         bulkUseCase = BulkCpuControlUseCase(repository, logRepository)
+        bootRestoreUseCase = RestoreCoresOnBootUseCase(
+            cpuRepository = repository,
+            rootRepository = rootRepository,
+            settingsRepository = settingsRepository,
+            logRepository = logRepository
+        )
     }
 
     @Test
@@ -217,6 +261,24 @@ class CpuSafetyUnitTest {
     }
 
     @Test
+    fun testDisableCpu4_Cpu3RemainsUnchanged() = runTest {
+        // Step 1: Disable CPU 3
+        toggleUseCase(3)
+        assertFalse("CPU 3 must be offline", repository.getCpuCore(3)!!.isOnline)
+
+        // Step 2: Disable CPU 4
+        toggleUseCase(4)
+        assertFalse("CPU 4 must be offline", repository.getCpuCore(4)!!.isOnline)
+
+        // Verify CPU 3 is STILL offline and not modified by CPU 4 action
+        assertFalse("CPU 3 must remain offline", repository.getCpuCore(3)!!.isOnline)
+        // Verify CPU 0, 1, 2, 5, 6, 7 are still online
+        for (id in listOf(0, 1, 2, 5, 6, 7)) {
+            assertTrue("CPU $id must remain online", repository.getCpuCore(id)!!.isOnline)
+        }
+    }
+
+    @Test
     fun testCpuIdValidationPreventsInjection() {
         val rootEngine = RootEngine()
         assertTrue(rootEngine.validateCpuId(0))
@@ -261,5 +323,71 @@ class CpuSafetyUnitTest {
         for (c in allCores) {
             assertTrue("Core ${c.cpuId} should be online after Bulk ALL ON", c.isOnline)
         }
+    }
+
+    @Test
+    fun testBootRestoreBringsAllEligibleCoresToOnline() = runTest {
+        // Simulate device state where cores 1, 3, 5 were previously turned off manually
+        toggleUseCase(1)
+        toggleUseCase(3)
+        toggleUseCase(5)
+
+        assertFalse(repository.getCpuCore(1)!!.isOnline)
+        assertFalse(repository.getCpuCore(3)!!.isOnline)
+        assertFalse(repository.getCpuCore(5)!!.isOnline)
+
+        // Execute Boot Restore
+        val restoreResults = bootRestoreUseCase()
+        assertEquals(3, restoreResults.size)
+        assertTrue(restoreResults.all { it is OperationResult.Success })
+
+        // Verify all 8 cores are online post-reboot restore
+        val allCores = repository.detectCpus()
+        for (c in allCores) {
+            assertTrue("Core ${c.cpuId} must be online after reboot restore", c.isOnline)
+        }
+    }
+
+    @Test
+    fun testBootRestoreDisabledSettingSkipsRestoration() = runTest {
+        // Disable the setting
+        settingsRepository.setRestoreOnBoot(false)
+
+        // Turn core 3 off
+        toggleUseCase(3)
+        assertFalse(repository.getCpuCore(3)!!.isOnline)
+
+        // Execute Boot Restore
+        val restoreResults = bootRestoreUseCase()
+        assertTrue("Boot restore must skip when disabled in settings", restoreResults.isEmpty())
+
+        // Verify core 3 remains untouched (offline)
+        assertFalse(repository.getCpuCore(3)!!.isOnline)
+    }
+
+    @Test
+    fun testBootRestoreAbortsWhenRootUnavailable() = runTest {
+        rootRepository.status = RootStatus.NotAvailable
+
+        toggleUseCase(3)
+        val restoreResults = bootRestoreUseCase()
+        assertTrue("Boot restore must abort when root is unavailable", restoreResults.isEmpty())
+        assertFalse(repository.getCpuCore(3)!!.isOnline)
+    }
+
+    @Test
+    fun testFailedRootOperationShowsActualCpuState() = runTest {
+        // Simulate kernel hardware lock on CPU 2: echo returns 0 but sysfs doesn't change
+        fakeHardware.simulateHardwareLockOnCpu = 2
+
+        val result = toggleUseCase(2)
+        assertTrue("Should report failure when sysfs fails to transition", result is OperationResult.Failure)
+        val failure = result as OperationResult.Failure
+        assertTrue(failure.errorMessage.contains("Verification failed"))
+
+        // Actual sysfs state is verified as still online
+        val core2 = repository.getCpuCore(2)
+        assertNotNull(core2)
+        assertTrue(core2!!.isOnline)
     }
 }

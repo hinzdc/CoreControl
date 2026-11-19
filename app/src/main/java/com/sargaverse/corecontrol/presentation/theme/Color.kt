@@ -24,6 +24,15 @@ val TextPrimaryDark = Color(0xFFF8FAFC)
 val TextSecondaryDark = Color(0xFF94A3B8)
 val TextTertiaryDark = Color(0xFF64748B)
 
+// Core Card Backgrounds
+val CardOnlineBgDark = Color(0xFF0D2818)
+val CardOfflineBgDark = Color(0xFF2E0F13)
+val CardNeutralBgDark = Color(0xFF161D26)
+
+val CardOnlineBgLight = Color(0xFFDCFCE7)
+val CardOfflineBgLight = Color(0xFFFEE2E2)
+val CardNeutralBgLight = Color(0xFFF1F5F9)
+
 // Light Theme Palette
 val CyberBackgroundLight = Color(0xFFF8FAFC)
 val CyberSurfaceLight = Color(0xFFFFFFFF)

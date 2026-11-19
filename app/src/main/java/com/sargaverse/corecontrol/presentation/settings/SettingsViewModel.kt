@@ -16,6 +16,7 @@ data class SettingsUiState(
     val refreshIntervalMs: Long = 2000L,
     val confirmBulkActions: Boolean = true,
     val confirmIndividualAction: Boolean = false,
+    val restoreOnBoot: Boolean = true,
     val rootStatus: RootStatus = RootStatus.Checking
 )
 
@@ -48,6 +49,11 @@ class SettingsViewModel(
                 _uiState.update { it.copy(confirmIndividualAction = confirm) }
             }
         }
+        viewModelScope.launch {
+            settingsRepository.restoreOnBoot.collect { restore ->
+                _uiState.update { it.copy(restoreOnBoot = restore) }
+            }
+        }
     }
 
     fun checkRoot() {
@@ -73,6 +79,12 @@ class SettingsViewModel(
     fun setConfirmIndividualAction(confirm: Boolean) {
         viewModelScope.launch {
             settingsRepository.setConfirmIndividualAction(confirm)
+        }
+    }
+
+    fun setRestoreOnBoot(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setRestoreOnBoot(enabled)
         }
     }
 

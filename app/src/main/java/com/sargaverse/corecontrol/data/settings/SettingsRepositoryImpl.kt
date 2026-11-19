@@ -24,8 +24,10 @@ class SettingsRepositoryImpl(
         val KEY_REFRESH_INTERVAL_MS = longPreferencesKey("refresh_interval_ms")
         val KEY_CONFIRM_BULK_ACTIONS = booleanPreferencesKey("confirm_bulk_actions")
         val KEY_CONFIRM_INDIVIDUAL_ACTION = booleanPreferencesKey("confirm_individual_action")
+        val KEY_RESTORE_ON_BOOT = booleanPreferencesKey("restore_on_boot")
 
         const val DEFAULT_REFRESH_INTERVAL_MS = 2000L
+        const val DEFAULT_RESTORE_ON_BOOT = true
     }
 
     override val refreshIntervalMs: Flow<Long> = context.dataStore.data
@@ -52,6 +54,14 @@ class SettingsRepositoryImpl(
             preferences[KEY_CONFIRM_INDIVIDUAL_ACTION] ?: false
         }
 
+    override val restoreOnBoot: Flow<Boolean> = context.dataStore.data
+        .catch { exception ->
+            if (exception is IOException) emit(emptyPreferences()) else throw exception
+        }
+        .map { preferences ->
+            preferences[KEY_RESTORE_ON_BOOT] ?: DEFAULT_RESTORE_ON_BOOT
+        }
+
     override suspend fun setRefreshIntervalMs(interval: Long) {
         context.dataStore.edit { preferences ->
             preferences[KEY_REFRESH_INTERVAL_MS] = interval
@@ -67,6 +77,12 @@ class SettingsRepositoryImpl(
     override suspend fun setConfirmIndividualAction(confirm: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[KEY_CONFIRM_INDIVIDUAL_ACTION] = confirm
+        }
+    }
+
+    override suspend fun setRestoreOnBoot(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[KEY_RESTORE_ON_BOOT] = enabled
         }
     }
 }

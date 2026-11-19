@@ -92,15 +92,24 @@ class MainActivity : ComponentActivity() {
                         Screen.SETTINGS -> {
                             BackHandler {
                                 currentScreen = Screen.DASHBOARD
+                                dashboardViewModel.manualRefresh()
                             }
                             SettingsScreen(
                                 viewModel = settingsViewModel,
-                                onBack = { currentScreen = Screen.DASHBOARD }
+                                onBack = {
+                                    currentScreen = Screen.DASHBOARD
+                                    dashboardViewModel.manualRefresh()
+                                }
                             )
                         }
                     }
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        dashboardViewModel.manualRefresh()
     }
 }

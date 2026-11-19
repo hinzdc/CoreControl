@@ -5,5 +5,6 @@ enum class OperationAction {
     TOGGLE_OFF,
     BULK_ALL_ON,
     BULK_ALL_OFF,
+    BOOT_RESTORE,
     REFRESH
 }

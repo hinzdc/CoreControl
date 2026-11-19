@@ -9,8 +9,10 @@ interface SettingsRepository {
     val refreshIntervalMs: Flow<Long>
     val confirmBulkActions: Flow<Boolean>
     val confirmIndividualAction: Flow<Boolean>
+    val restoreOnBoot: Flow<Boolean>
 
     suspend fun setRefreshIntervalMs(interval: Long)
     suspend fun setConfirmBulkActions(confirm: Boolean)
     suspend fun setConfirmIndividualAction(confirm: Boolean)
+    suspend fun setRestoreOnBoot(enabled: Boolean)
 }

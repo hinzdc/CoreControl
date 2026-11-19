@@ -4,28 +4,23 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.PowerSettingsNew
+import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,18 +28,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sargaverse.corecontrol.domain.model.CpuCapabilityState
 import com.sargaverse.corecontrol.domain.model.CpuCore
+import com.sargaverse.corecontrol.presentation.theme.CardNeutralBgDark
+import com.sargaverse.corecontrol.presentation.theme.CardNeutralBgLight
+import com.sargaverse.corecontrol.presentation.theme.CardOfflineBgDark
+import com.sargaverse.corecontrol.presentation.theme.CardOfflineBgLight
+import com.sargaverse.corecontrol.presentation.theme.CardOnlineBgDark
+import com.sargaverse.corecontrol.presentation.theme.CardOnlineBgLight
 import com.sargaverse.corecontrol.presentation.theme.CoreErrorRed
-import com.sargaverse.corecontrol.presentation.theme.CoreOfflineSlate
-import com.sargaverse.corecontrol.presentation.theme.CoreOnlineGreen
-import com.sargaverse.corecontrol.presentation.theme.CorePrimePurple
 import com.sargaverse.corecontrol.presentation.theme.CoreProtectedAmber
-import com.sargaverse.corecontrol.presentation.theme.CyberPrimary
 
+/**
+ * Clickable rectangular CPU core card.
+ *
+ * Designed according to SARGAVERSE precision specifications:
+ * - Top: CPU Processor Icon
+ * - Center: High-contrast CPU ID & Frequency
+ * - Bottom: Current Status Label (ONLINE / OFFLINE / PROTECTED / UNSUPPORTED)
+ * - The entire card is clickable to toggle states (NO toggle switches).
+ */
 @Composable
 fun CpuCoreCard(
     core: CpuCore,
@@ -52,149 +59,149 @@ fun CpuCoreCard(
     onToggle: (CpuCore) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val statusColor by animateColorAsState(
-        targetValue = when (core.state) {
-            CpuCapabilityState.ONLINE -> CoreOnlineGreen
-            CpuCapabilityState.OFFLINE -> CoreOfflineSlate
-            CpuCapabilityState.PROTECTED -> CoreProtectedAmber
-            CpuCapabilityState.UNSUPPORTED -> Color.Gray
-            CpuCapabilityState.ERROR -> CoreErrorRed
-            CpuCapabilityState.UNKNOWN -> Color.Gray
-        },
-        animationSpec = tween(durationMillis = 300),
-        label = "statusColor"
+    val isDark = isSystemInDarkTheme()
+
+    // Determine state visual parameters
+    val targetBgColor = when (core.state) {
+        CpuCapabilityState.ONLINE -> if (isDark) CardOnlineBgDark else CardOnlineBgLight
+        CpuCapabilityState.OFFLINE -> if (isDark) CardOfflineBgDark else CardOfflineBgLight
+        CpuCapabilityState.PROTECTED -> if (isDark) CardNeutralBgDark else CardNeutralBgLight
+        CpuCapabilityState.UNSUPPORTED,
+        CpuCapabilityState.UNKNOWN,
+        CpuCapabilityState.ERROR -> if (isDark) CardNeutralBgDark else CardNeutralBgLight
+    }
+
+    val targetAccentColor = when (core.state) {
+        CpuCapabilityState.ONLINE -> Color(0xFF22C55E) // Bright Green
+        CpuCapabilityState.OFFLINE -> Color(0xFFEF4444) // Bright Red
+        CpuCapabilityState.PROTECTED -> CoreProtectedAmber // Amber
+        CpuCapabilityState.UNSUPPORTED -> Color(0xFF64748B) // Slate Gray
+        CpuCapabilityState.ERROR -> CoreErrorRed
+        CpuCapabilityState.UNKNOWN -> Color(0xFF64748B)
+    }
+
+    val targetTextColor = when {
+        core.state == CpuCapabilityState.UNSUPPORTED -> Color(0xFF94A3B8)
+        isDark -> Color.White
+        else -> if (core.state == CpuCapabilityState.PROTECTED) Color(0xFF0F172A) else Color.White
+    }
+
+    val animatedBgColor by animateColorAsState(
+        targetValue = targetBgColor,
+        animationSpec = tween(durationMillis = 250),
+        label = "cardBgColor"
     )
 
-    Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
+    val animatedAccentColor by animateColorAsState(
+        targetValue = targetAccentColor,
+        animationSpec = tween(durationMillis = 250),
+        label = "cardAccentColor"
+    )
+
+    val isClickable = core.isControllable && !isExecuting
+
+    Box(
         modifier = modifier
             .fillMaxWidth()
+            .height(130.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(animatedBgColor)
             .border(
                 width = 1.dp,
-                color = if (core.isOnline) statusColor.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                color = animatedAccentColor.copy(alpha = if (isDark) 0.35f else 0.5f),
                 shape = RoundedCornerShape(16.dp)
             )
+            .clickable(
+                enabled = isClickable,
+                onClick = { onToggle(core) }
+            )
+            .padding(14.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Left Column: CPU ID & Status indicator
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // Status dot indicator
-                Box(
-                    modifier = Modifier
-                        .size(12.dp)
-                        .clip(CircleShape)
-                        .background(statusColor)
-                )
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = "CPU ${core.cpuId}",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.5.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        // Capability or Cluster tag
-                        val tagText = when {
-                            core.isProtected -> "PROTECTED"
-                            !core.hotplugSupported -> "FIXED"
-                            core.clusterId == 2 -> "PRIME"
-                            core.clusterId == 1 -> "PERF"
-                            core.clusterId == 0 -> "EFF"
-                            else -> "CORE"
-                        }
-                        val tagColor = when {
-                            core.isProtected -> CoreProtectedAmber
-                            core.clusterId == 2 -> CorePrimePurple
-                            core.clusterId == 1 -> CyberPrimary
-                            else -> MaterialTheme.colorScheme.onSurfaceVariant
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(tagColor.copy(alpha = 0.15f))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = tagText,
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                color = tagColor
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(2.dp))
-
-                    // Frequency & Governor info
-                    val freqDisplay = if (core.isOnline) {
-                        core.formattedFrequency() + (core.governor?.let { " • $it" } ?: "")
-                    } else {
-                        "Offline • Low Power State"
-                    }
-
-                    Text(
-                        text = freqDisplay,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = if (core.isOnline) MaterialTheme.colorScheme.onSurfaceVariant else CoreOfflineSlate
-                    )
-                }
-            }
-
-            // Right side: Controls or Protected Lock Icon
+            // TOP: CPU Icon (or Spinner if executing)
             Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(28.dp),
+                contentAlignment = Alignment.Center
             ) {
                 if (isExecuting) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
+                        modifier = Modifier.size(22.dp),
                         strokeWidth = 2.5.dp,
-                        color = CyberPrimary
+                        color = animatedAccentColor
                     )
                 } else if (core.isProtected) {
                     Icon(
                         imageVector = Icons.Default.Lock,
                         contentDescription = "Core Protected",
-                        tint = CoreProtectedAmber,
-                        modifier = Modifier.size(22.dp)
-                    )
-                } else if (!core.hotplugSupported) {
-                    Text(
-                        text = "N/A",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = animatedAccentColor,
+                        modifier = Modifier.size(24.dp)
                     )
                 } else {
-                    Switch(
-                        checked = core.isOnline,
-                        onCheckedChange = { onToggle(core) },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = CoreOnlineGreen,
-                            checkedTrackColor = CoreOnlineGreen.copy(alpha = 0.3f),
-                            uncheckedThumbColor = CoreOfflineSlate,
-                            uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
+                    Icon(
+                        imageVector = Icons.Default.Memory,
+                        contentDescription = "CPU Core ${core.cpuId}",
+                        tint = animatedAccentColor,
+                        modifier = Modifier.size(26.dp)
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // CENTER: CPU ID and optional live frequency
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "CPU ${core.cpuId}",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 17.sp,
+                        letterSpacing = 0.5.sp
+                    ),
+                    color = targetTextColor
+                )
+
+                val freqText = if (core.isOnline) {
+                    core.formattedFrequency()
+                } else {
+                    "Offline"
+                }
+
+                Text(
+                    text = freqText,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 10.sp
+                    ),
+                    color = if (core.isOnline) animatedAccentColor.copy(alpha = 0.9f) else Color(0xFF94A3B8)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // BOTTOM: Status Label
+            val statusLabel = when (core.state) {
+                CpuCapabilityState.ONLINE -> "ONLINE"
+                CpuCapabilityState.OFFLINE -> "OFFLINE"
+                CpuCapabilityState.PROTECTED -> "PROTECTED"
+                CpuCapabilityState.UNSUPPORTED -> "UNSUPPORTED"
+                CpuCapabilityState.ERROR -> "ERROR"
+                CpuCapabilityState.UNKNOWN -> "UNKNOWN"
+            }
+
+            Text(
+                text = statusLabel,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp,
+                    letterSpacing = 1.sp
+                ),
+                color = animatedAccentColor
+            )
         }
     }
 }

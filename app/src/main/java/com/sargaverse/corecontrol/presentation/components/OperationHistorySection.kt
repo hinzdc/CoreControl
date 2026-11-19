@@ -82,6 +82,7 @@ private fun LogItemRow(log: OperationLog) {
         OperationAction.TOGGLE_OFF -> "CPU ${log.cpuId} → OFFLINE"
         OperationAction.BULK_ALL_ON -> "BULK ALL ON (CPU ${log.cpuId})"
         OperationAction.BULK_ALL_OFF -> "BULK ALL OFF (CPU ${log.cpuId})"
+        OperationAction.BOOT_RESTORE -> "BOOT RESTORE (CPU ${log.cpuId})"
         OperationAction.REFRESH -> "REFRESH"
     }
 

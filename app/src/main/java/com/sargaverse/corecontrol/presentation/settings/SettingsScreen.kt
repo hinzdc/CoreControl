@@ -166,6 +166,36 @@ fun SettingsScreen(
                             )
                         )
                     }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Restore All Cores on Boot",
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            )
+                            Text(
+                                text = "Automatically restore all eligible offline CPU cores to ONLINE after system reboot. Cores manually disabled will not stay disabled across reboots.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = uiState.restoreOnBoot,
+                            onCheckedChange = viewModel::setRestoreOnBoot,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = CoreOnlineGreen,
+                                checkedTrackColor = CoreOnlineGreen.copy(alpha = 0.3f)
+                            )
+                        )
+                    }
                 }
             }
 
